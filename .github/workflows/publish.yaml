@@ -31,6 +31,6 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: |
-            ghcr.io/${{ github.repository.repository_owner.toLower() }}/ctp-image:${{ github.ref_name }}
-            ghcr.io/${{ github.repository.repository_owner.toLower() }}/ctp-image:latest
+          tags: |            
+            ghcr.io/${{ github.repository_owner.toLower() }}/ctp:${{ github.ref_name }}
+            ghcr.io/${{ github.repository_owner.toLower() }}/ctp:latest
