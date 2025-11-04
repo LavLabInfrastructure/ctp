@@ -23,7 +23,7 @@ WORKDIR /JavaPrograms/CTP
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gdal-bin \
     libgdal30 \
-    libturbojpeg0 \
+    libturbojpeg \
     && rm -rf /var/lib/apt/lists/*
 
 ENV LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib:/lib:/usr/lib/jni
