@@ -60,12 +60,14 @@ WORKDIR /JavaPrograms
 # Copy extracted CTP
 COPY --from=extractor /JavaPrograms/CTP /JavaPrograms/CTP
 
-# Remove the bundled jai_imageio JPEG2000 classes to avoid conflict
+# Remove JPEG2000 service provider registrations from the bundled jai_imageio to avoid conflict
+# but keep the classes so metadata/resources are available
 RUN cd /JavaPrograms/CTP/libraries/imageio && \
     mkdir temp && \
     cd temp && \
     jar xf ../jai_imageio-1.2-pre-dr-b04.jar && \
-    rm -rf com/sun/media/imageioimpl/plugins/jpeg2000 && \
+    sed -i '/com.sun.media.imageioimpl.plugins.jpeg2000/d' META-INF/services/javax.imageio.spi.ImageReaderSpi && \
+    sed -i '/com.sun.media.imageioimpl.plugins.jpeg2000/d' META-INF/services/javax.imageio.spi.ImageWriterSpi && \
     jar cf ../jai_imageio-1.2-pre-dr-b04-patched.jar * && \
     cd .. && \
     rm -rf temp && \
