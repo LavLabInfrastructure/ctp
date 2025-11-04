@@ -1,9 +1,7 @@
 FROM curlimages/curl AS downloader
 RUN curl -fL -o /tmp/installer.jar https://github.com/johnperry/CTP/raw/x206/products/CTP-installer.jar && \
-    curl -fL -o /tmp/imageio-ext-jars.zip https://demo.geo-solutions.it/share/github/imageio-ext/releases/1.3.X/1.3.2/imageio-ext-1.3.2-jars.zip && \
-    mkdir /tmp/imageio && cd /tmp/imageio && unzip -q ../imageio-ext-jars.zip
-
-FROM josejuansanchez/kakadu:latest AS kakadu
+    curl -fL -o /tmp/jai-imageio-core.jar https://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-core/1.4.0/jai-imageio-core-1.4.0.jar && \
+    curl -fL -o /tmp/jai-imageio-jpeg2000.jar https://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-jpeg2000/1.4.0/jai-imageio-jpeg2000-1.4.0.jar
 
 FROM eclipse-temurin:21-jdk-jammy AS extractor
 WORKDIR /JavaPrograms
@@ -13,30 +11,22 @@ RUN cd /tmp && \
     jar -xf installer.jar && \
     mv CTP /JavaPrograms/CTP && \
     mv config/config.xml /JavaPrograms/CTP/config.xml && \
-    chmod +x /JavaPrograms/CTP/linux/*.sh && rm -rf /JavaPrograms/CTP/libraries/imageio/ && \
-    mkdir /JavaPrograms/CTP/libraries/imageio/
+    chmod +x /JavaPrograms/CTP/linux/*.sh && \
+    rm -f /JavaPrograms/CTP/libraries/imageio/clibwrapper_jiio-*.jar && \
+    rm -f /JavaPrograms/CTP/libraries/imageio/jai_imageio-*.jar && \
+    mkdir -p /JavaPrograms/CTP/libraries/imageio/
 
-COPY --from=downloader /tmp/imageio/*.jar /JavaPrograms/CTP/libraries/imageio/
+# Add pure-Java JAI ImageIO plugins for JPEG2000
+COPY --from=downloader /tmp/jai-imageio-core.jar /JavaPrograms/CTP/libraries/imageio/jai-imageio-core-1.4.0.jar
+COPY --from=downloader /tmp/jai-imageio-jpeg2000.jar /JavaPrograms/CTP/libraries/imageio/jai-imageio-jpeg2000-1.4.0.jar
 
 
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /JavaPrograms/CTP
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gdal-bin \
-    libgdal30 \
-    libturbojpeg \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY --from=kakadu /kakadu /usr/local/kakadu
-
-ENV LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib:/lib:/usr/lib/jni:/usr/local/kakadu
-ENV JAVA_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib:/lib:/usr/lib/jni:/usr/local/kakadu
-ENV PATH=$PATH:/usr/local/kakadu
 
 COPY --from=extractor /JavaPrograms/CTP /JavaPrograms/CTP
 
-WORKDIR /JavaPrograms/CTP
-
 EXPOSE 80
 
-ENTRYPOINT ["java", "--add-opens=java.base/java.lang=ALL-UNNAMED", "--add-opens=java.base/java.util=ALL-UNNAMED", "--add-opens=java.desktop/java.awt.image=ALL-UNNAMED", "--add-opens=java.desktop/javax.imageio.stream=ALL-UNNAMED", "--add-opens=java.desktop/javax.imageio=ALL-UNNAMED", "--add-exports=java.desktop/com.sun.imageio.plugins.jpeg=ALL-UNNAMED", "--add-exports=java.desktop/com.sun.imageio.plugins.png=ALL-UNNAMED", "-Djava.awt.headless=true", "-Djava.library.path=/usr/lib/x86_64-linux-gnu:/usr/lib:/lib", "-Dcom.sun.media.imageio.stream.buffersize=65536", "-jar", "Runner.jar"]
+# Run with module opens and force pure-Java JPEG2000
+ENTRYPOINT ["java", "--add-opens=java.base/java.lang=ALL-UNNAMED", "--add-opens=java.base/java.util=ALL-UNNAMED", "--add-opens=java.desktop/java.awt.image=ALL-UNNAMED", "--add-opens=java.desktop/javax.imageio.stream=ALL-UNNAMED", "--add-opens=java.desktop/javax.imageio=ALL-UNNAMED", "--add-exports=java.desktop/com.sun.imageio.plugins.jpeg=ALL-UNNAMED", "--add-exports=java.desktop/com.sun.imageio.plugins.png=ALL-UNNAMED", "-Djava.awt.headless=true", "-Dcom.sun.media.imageio.disableCodecLib=true", "-Dcom.sun.media.imageio.stream.buffersize=65536", "-jar", "Runner.jar"]
