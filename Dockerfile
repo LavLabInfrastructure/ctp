@@ -1,6 +1,5 @@
 FROM curlimages/curl AS downloader
-RUN apk add --no-cache unzip && \
-    curl -fL -o /tmp/installer.jar https://github.com/johnperry/CTP/raw/x206/products/CTP-installer.jar && \
+RUN curl -fL -o /tmp/installer.jar https://github.com/johnperry/CTP/raw/x206/products/CTP-installer.jar && \
     curl -fL -o /tmp/imageio-ext-jars.zip https://demo.geo-solutions.it/share/github/imageio-ext/releases/1.3.X/1.3.2/imageio-ext-1.3.2-jars.zip && \
     cd /tmp && unzip -q imageio-ext-jars.zip && \
     mkdir -p /output && \
