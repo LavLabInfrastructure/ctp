@@ -48,7 +48,11 @@ RUN apt-get update && apt-get install -y git && \
     sed -i 's/System.runFinalizersOnExit(true);/\/\/ System.runFinalizersOnExit(true); \/\/ Deprecated and removed in modern Java/g' src/main/java/jj2000/j2k/entropy/encoder/EBCOTRateAllocator.java && \
     sed -i 's/System.runFinalizersOnExit(true);/\/\/ System.runFinalizersOnExit(true); \/\/ Deprecated and removed in modern Java/g' src/main/java/jj2000/j2k/entropy/encoder/StdEntropyCoder.java && \
     sed -i 's/System.runFinalizersOnExit(true);/\/\/ System.runFinalizersOnExit(true); \/\/ Deprecated and removed in modern Java/g' src/main/java/jj2000/j2k/entropy/decoder/StdEntropyDecoder.java && \
-    mvn clean package -DskipTests -Dmaven.javadoc.skip=true
+    mvn clean package -DskipTests -Dmaven.javadoc.skip=true && \
+    mkdir temp && cd temp && \
+    jar xf ../target/jai-imageio-jpeg2000-1.2-pre-dr-b04-2014-09-13.jar && \
+    rm -f META-INF/*.SF META-INF/*.RSA META-INF/*.DSA && \
+    jar cf ../target/jai-imageio-jpeg2000-1.2-pre-dr-b04-2014-09-13-unsealed.jar *
 
 FROM eclipse-temurin:21-jdk-jammy AS assembler
 WORKDIR /JavaPrograms
@@ -56,7 +60,7 @@ WORKDIR /JavaPrograms
 # Copy extracted CTP
 COPY --from=extractor /JavaPrograms/CTP /JavaPrograms/CTP
 
-# Remove JPEG2000 classes from the bundled jai_imageio to avoid sealing violation
+# Remove the bundled jai_imageio JPEG2000 classes to avoid conflict
 RUN cd /JavaPrograms/CTP/libraries/imageio && \
     mkdir temp && \
     cd temp && \
@@ -68,8 +72,8 @@ RUN cd /JavaPrograms/CTP/libraries/imageio && \
     rm jai_imageio-1.2-pre-dr-b04.jar && \
     mv jai_imageio-1.2-pre-dr-b04-patched.jar jai_imageio-1.2-pre-dr-b04.jar
 
-# Add the built JPEG2000 plugin
-COPY --from=builder /build/jai-imageio-jpeg2000/target/jai-imageio-jpeg2000-1.2-pre-dr-b04-2014-09-13.jar /JavaPrograms/CTP/libraries/imageio/
+# Add the built unsealed JPEG2000 plugin
+COPY --from=builder /build/jai-imageio-jpeg2000/target/jai-imageio-jpeg2000-1.2-pre-dr-b04-2014-09-13-unsealed.jar /JavaPrograms/CTP/libraries/imageio/jai-imageio-jpeg2000-1.2-pre-dr-b04-2014-09-13.jar
 
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /JavaPrograms/CTP
