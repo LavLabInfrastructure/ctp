@@ -24,7 +24,7 @@ WORKDIR /JavaPrograms/CTP
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gdal-bin \
     libgdal30 \
-    libturbojpeg0 \
+    libturbojpeg \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=kakadu /kakadu /usr/local/kakadu
