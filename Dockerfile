@@ -11,7 +11,8 @@ RUN cd /tmp && \
     jar -xf installer.jar && \
     mv CTP /JavaPrograms/CTP && \
     mv config/config.xml /JavaPrograms/CTP/config.xml && \
-    chmod +x /JavaPrograms/CTP/linux/*.sh
+    chmod +x /JavaPrograms/CTP/linux/*.sh && rm -rf /JavaPrograms/CTP/libraries/imageio/ && \
+    mkdir /JavaPrograms/CTP/libraries/imageio/
 
 # Copy imageio-ext 1.3.2 jars (includes OpenJPEG, Kakadu, and other plugins)
 COPY --from=downloader /tmp/imageio/*.jar /JavaPrograms/CTP/libraries/imageio/
