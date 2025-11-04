@@ -1,7 +1,12 @@
 FROM curlimages/curl AS downloader
-RUN curl -fL -o /tmp/installer.jar https://github.com/johnperry/CTP/raw/x206/products/CTP-installer.jar && \
-    curl -fL -o /tmp/jai-imageio-core.jar https://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-core/1.3.0/jai-imageio-core-1.3.0.jar && \
-    curl -fL -o /tmp/jai-imageio-jpeg2000.jar https://repo1.maven.org/maven2/com/github/jai-imageio/jai-imageio-jpeg2000/1.3.0/jai-imageio-jpeg2000-1.3.0.jar
+RUN curl -fL -o /tmp/installer.jar https://github.com/johnperry/CTP/raw/x206/products/CTP-installer.jar
+
+FROM maven:3.9-eclipse-temurin-11 AS builder
+WORKDIR /build
+RUN apt-get update && apt-get install -y git && \
+    git clone --depth 1 --branch jai-imageio-jpeg2000-1.2-pre-dr-b04-2014-09-13 https://github.com/jai-imageio/jai-imageio-jpeg2000.git && \
+    cd jai-imageio-jpeg2000 && \
+    mvn clean package -DskipTests
 
 FROM eclipse-temurin:21-jdk-jammy AS extractor
 WORKDIR /JavaPrograms
@@ -11,11 +16,11 @@ RUN cd /tmp && \
     jar -xf installer.jar && \
     mv CTP /JavaPrograms/CTP && \
     mv config/config.xml /JavaPrograms/CTP/config.xml && \
-    chmod +x /JavaPrograms/CTP/linux/*.sh
+    chmod +x /JavaPrograms/CTP/linux/*.sh && \
+    rm -f /JavaPrograms/CTP/libraries/imageio/clibwrapper_jiio-*.jar
 
-# Add pure-Java JAI ImageIO plugins for JPEG2000
-COPY --from=downloader /tmp/jai-imageio-core.jar /JavaPrograms/CTP/libraries/imageio/jai-imageio-core-1.3.0.jar
-COPY --from=downloader /tmp/jai-imageio-jpeg2000.jar /JavaPrograms/CTP/libraries/imageio/jai-imageio-jpeg2000-1.3.0.jar
+# Add the built JPEG2000 plugin that matches CTP's jai_imageio version
+COPY --from=builder /build/jai-imageio-jpeg2000/target/jai-imageio-jpeg2000-1.2-pre-dr-b04-2014-09-13.jar /JavaPrograms/CTP/libraries/imageio/
 
 
 FROM eclipse-temurin:21-jre-jammy
