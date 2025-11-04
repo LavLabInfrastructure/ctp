@@ -25,6 +25,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends libopenjp2-7 &&
 
 COPY --from=extractor /JavaPrograms/CTP /JavaPrograms/CTP
 
+WORKDIR /JavaPrograms/CTP
+
 EXPOSE 80
 
-ENTRYPOINT ["java", "--add-opens=java.base/java.lang=ALL-UNNAMED", "--add-opens=java.base/java.util=ALL-UNNAMED", "--add-opens=java.desktop/java.awt.image=ALL-UNNAMED", "--add-opens=java.desktop/javax.imageio.stream=ALL-UNNAMED", "--add-opens=java.desktop/javax.imageio=ALL-UNNAMED", "--add-exports=java.desktop/com.sun.imageio.plugins.jpeg=ALL-UNNAMED", "--add-exports=java.desktop/com.sun.imageio.plugins.png=ALL-UNNAMED", "-Djava.awt.headless=true", "-Djava.library.path=/usr/lib/x86_64-linux-gnu", "-jar", "Runner.jar"]
+ENTRYPOINT ["java", "--add-opens=java.base/java.lang=ALL-UNNAMED", "--add-opens=java.base/java.util=ALL-UNNAMED", "--add-opens=java.desktop/java.awt.image=ALL-UNNAMED", "--add-opens=java.desktop/javax.imageio.stream=ALL-UNNAMED", "--add-opens=java.desktop/javax.imageio=ALL-UNNAMED", "--add-exports=java.desktop/com.sun.imageio.plugins.jpeg=ALL-UNNAMED", "--add-exports=java.desktop/com.sun.imageio.plugins.png=ALL-UNNAMED", "-Djava.awt.headless=true", "-Djava.library.path=/usr/lib/x86_64-linux-gnu:/usr/lib:/lib", "-Dcom.sun.media.imageio.stream.buffersize=65536", "-jar", "Runner.jar"]
