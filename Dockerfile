@@ -56,8 +56,17 @@ WORKDIR /JavaPrograms
 # Copy extracted CTP
 COPY --from=extractor /JavaPrograms/CTP /JavaPrograms/CTP
 
-# Remove any existing JPEG2000 plugin jars to avoid sealing violations
-RUN rm -f /JavaPrograms/CTP/libraries/imageio/jai-imageio-jpeg2000*.jar
+# Remove JPEG2000 classes from the bundled jai_imageio to avoid sealing violation
+RUN cd /JavaPrograms/CTP/libraries/imageio && \
+    mkdir temp && \
+    cd temp && \
+    jar xf ../jai_imageio-1.2-pre-dr-b04.jar && \
+    rm -rf com/sun/media/imageioimpl/plugins/jpeg2000 && \
+    jar cf ../jai_imageio-1.2-pre-dr-b04-patched.jar * && \
+    cd .. && \
+    rm -rf temp && \
+    rm jai_imageio-1.2-pre-dr-b04.jar && \
+    mv jai_imageio-1.2-pre-dr-b04-patched.jar jai_imageio-1.2-pre-dr-b04.jar
 
 # Add the built JPEG2000 plugin
 COPY --from=builder /build/jai-imageio-jpeg2000/target/jai-imageio-jpeg2000-1.2-pre-dr-b04-2014-09-13.jar /JavaPrograms/CTP/libraries/imageio/
@@ -69,4 +78,5 @@ COPY --from=assembler /JavaPrograms/CTP /JavaPrograms/CTP
 
 EXPOSE 80
 
-CMD ["java","-jar","Runner.jar"]
+# Run with module opens and force pure-Java JPEG2000
+ENTRYPOINT ["java", "--add-opens=java.base/java.lang=ALL-UNNAMED", "--add-opens=java.base/java.util=ALL-UNNAMED", "--add-opens=java.desktop/java.awt.image=ALL-UNNAMED", "--add-opens=java.desktop/javax.imageio.stream=ALL-UNNAMED", "--add-opens=java.desktop/javax.imageio=ALL-UNNAMED", "--add-exports=java.desktop/com.sun.imageio.plugins.jpeg=ALL-UNNAMED", "--add-exports=java.desktop/com.sun.imageio.plugins.png=ALL-UNNAMED", "-Djava.awt.headless=true", "-Dcom.sun.media.imageio.disableCodecLib=true", "-Dcom.sun.media.imageio.stream.buffersize=65536", "-jar", "Runner.jar"]
