@@ -14,15 +14,20 @@ RUN cd /tmp && \
     chmod +x /JavaPrograms/CTP/linux/*.sh && rm -rf /JavaPrograms/CTP/libraries/imageio/ && \
     mkdir /JavaPrograms/CTP/libraries/imageio/
 
-# Copy imageio-ext 1.3.2 jars (includes OpenJPEG, Kakadu, and other plugins)
 COPY --from=downloader /tmp/imageio/*.jar /JavaPrograms/CTP/libraries/imageio/
 
 
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /JavaPrograms/CTP
 
-# Install OpenJPEG native library for imageio-ext JPEG2000 support
-RUN apt-get update && apt-get install -y --no-install-recommends libopenjp2-7 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gdal-bin \
+    libgdal30 \
+    libturbojpeg0 \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib:/lib:/usr/lib/jni
+ENV JAVA_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib:/lib:/usr/lib/jni
 
 COPY --from=extractor /JavaPrograms/CTP /JavaPrograms/CTP
 
