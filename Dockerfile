@@ -18,7 +18,7 @@ COPY --from=downloader /tmp/*/*.jar /JavaPrograms/CTP/libraries/imageio/
 
 
 FROM eclipse-temurin:21-jre-jammy
-WORKDIR /JavaPrograms
+WORKDIR /JavaPrograms/CTP
 
 # Install OpenJPEG native library for imageio-ext JPEG2000 support
 RUN apt-get update && apt-get install -y --no-install-recommends libopenjp2-7 && rm -rf /var/lib/apt/lists/*
